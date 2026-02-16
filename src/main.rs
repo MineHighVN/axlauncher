@@ -101,11 +101,12 @@ fn new() -> (State, Task<Message>) {
     let mojang_repo = Arc::new(MojangRepository::new());
     let account_repo = Arc::new(AccountRepository::new());
 
-    let (home_screen, home_task) = ui::home::HomeScreen::new(mojang_repo);
+    let (home_screen, home_task) =
+        ui::home::HomeScreen::new(mojang_repo.clone(), account_repo.clone());
 
     let settings_screen = ui::settings::SettingsScreen::new(theme.clone());
 
-    let accounts_screen = ui::accounts::AccountsScreen::new(account_repo);
+    let accounts_screen = ui::accounts::AccountsScreen::new(account_repo.clone());
 
     let saved_screen = SavedScreen::new(home_screen, settings_screen, accounts_screen);
 
