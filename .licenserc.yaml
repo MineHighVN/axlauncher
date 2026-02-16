@@ -1,0 +1,26 @@
+header:
+  license:
+    spdx-id: Apache-2.0
+    copyright-owner: MineHighVN, AXLauncher contributors
+    copyright-year: 2026
+    content: |
+      Copyright 2026 MineHighVN, AXLauncher contributors
+      SPDX-License-Identifier: Apache-2.0
+
+  paths:
+    - "src/**/*.rs"
+
+  paths-ignore:
+    - "**/target/**"
+    - "**/*.md"
+    - "LICENSE"
+    - "NOTICE"
+    - ".gitignore"
+    - "Cargo.toml"
+    - "Cargo.lock"
+
+  language:
+    Rust:
+      extensions:
+        - ".rs"
+      comment_style_id: DoubleSlash
