@@ -7,6 +7,7 @@ use iced::widget::{Space, column, container, pick_list, row, text};
 use iced::{Alignment, Font, Length, Task};
 
 use crate::common::app_ui::AppUI;
+use crate::module::account::repository::AccountRepository;
 use crate::module::launcher::service::{LaunchArgs, LauncherService};
 use crate::module::mojang::entity::MinecraftVersion;
 use crate::module::mojang::repository::MojangRepository;
@@ -23,16 +24,21 @@ pub struct HomeScreen {
     pub versions: Vec<MinecraftVersion>,
     pub selected_version: Option<MinecraftVersion>,
     pub error: Option<String>,
+    pub account_repo: Arc<AccountRepository>,
 }
 
 impl HomeScreen {
-    pub fn new(mojang_repo: Arc<MojangRepository>) -> (Self, Task<Message>) {
+    pub fn new(
+        mojang_repo: Arc<MojangRepository>,
+        account_repo: Arc<AccountRepository>,
+    ) -> (Self, Task<Message>) {
         let repo_clone = mojang_repo.clone();
         (
             Self {
                 versions: Vec::new(),
                 selected_version: None,
                 error: None,
+                account_repo,
             },
             Task::perform(
                 async move { repo_clone.get_all_versions().await },
@@ -54,12 +60,23 @@ impl HomeScreen {
             }
             Message::PlayPressed => {
                 if let Some(v) = &self.selected_version {
-                    println!("Playing version: {}", v.id);
+                    let Some(active_user) = self.account_repo.get_active() else {
+                        // TODO: Show user a warning
+
+                        println!("No active account");
+                        return Task::none();
+                    };
+
+                    println!(
+                        "Playing version {} with user {}",
+                        v.id, active_user.username
+                    );
+
                     if let Some(version) = &self.selected_version {
                         return Task::perform(
                             LauncherService::launch(
                                 LaunchArgs {
-                                    username: "TestPlayer".to_owned(),
+                                    username: active_user.username.clone(),
                                     ..Default::default()
                                 },
                                 version.clone(),
