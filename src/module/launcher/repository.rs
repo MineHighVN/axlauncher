@@ -12,15 +12,23 @@ pub struct LauncherRepository {}
 
 impl LauncherRepository {
     /// Returns Java download URL based on OS and Architecture (x86_64, arm64,...)
+    // TODO: Implement for other operating system later
     pub fn get_java_download_url() -> &'static str {
-        #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-        return "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_aarch64_mac_hotspot_21.0.2_13.tar.gz";
-
-        #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
-        return "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_mac_hotspot_21.0.2_13.tar.gz";
-
-        #[cfg(target_os = "windows")]
-        return "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_windows_hotspot_21.0.2_13.zip";
+        match (std::env::consts::OS, std::env::consts::ARCH) {
+            ("macos", "aarch64") => {
+                "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_aarch64_mac_hotspot_21.0.2_13.tar.gz"
+            }
+            ("macos", "x86_64") => {
+                "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_mac_hotspot_21.0.2_13.tar.gz"
+            }
+            ("windows", _) => {
+                "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_windows_hotspot_21.0.2_13.zip"
+            }
+            ("linux", "x86_64") => {
+                "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.2%2B13/OpenJDK21U-jdk_x64_linux_hotspot_21.0.2_13.tar.gz"
+            }
+            _ => panic!("Unsupported operating system"),
+        }
     }
 
     /// Install file from url and write into a directory
