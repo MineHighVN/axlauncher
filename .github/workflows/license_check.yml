@@ -2,9 +2,9 @@ name: License Header Check
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: ["main", "fix/*", "feat/*"]
   pull_request:
-    branches: ["main", "master"]
+    branches: ["main", "fix/*", "feat/*"]
 
 jobs:
   check-license:
