@@ -1,0 +1,42 @@
+name: License Header Check
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  check-license:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check License Header
+        uses: apache/skywalking-eyes/header@main
+        with:
+          config: |
+            header:
+              license:
+                spdx-id: Apache-2.0
+                copyright-owner: MineHighVN, AXLauncher contributors
+                copyright-year: 2026
+                
+                pattern: |
+                  Copyright 2026 MineHighVN, AXLauncher contributors
+                  SPDX-License-Identifier: Apache-2.0
+
+              paths:
+                - 'src/**/*.rs'
+
+              paths-ignore:
+                - '**/target/**'
+                - '**/*.md'
+                - 'LICENSE'
+                - 'NOTICE'
+                - '.gitignore'
+                - 'Cargo.toml'
+                - 'Cargo.lock'
+
+            comment: on-failure
