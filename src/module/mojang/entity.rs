@@ -3,11 +3,12 @@
 
 use core::fmt;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MinecraftVersion {
     pub id: String,
     pub version_type: String,
-    pub url: String,
+    pub url: Option<String>,
+    pub available: bool,
 }
 
 impl fmt::Display for MinecraftVersion {
