@@ -15,10 +15,13 @@ use crate::module::config::repository::ConfigRepository;
 pub enum Message {
     RamChanged(u32),
     JavaPathChanged(String),
+    MinecraftRootDirChanged(String),
     LanguageChanged(String),
     ThemeChanged(Theme),
+    BrowseMinecraftDir,
     CheckForUpdates,
     OpenGithub,
+    None,
 }
 
 pub struct SettingsScreen {
@@ -26,14 +29,16 @@ pub struct SettingsScreen {
     pub java_path: String,
     pub selected_language: String,
     pub current_theme: Theme,
+    pub minecraft_root_dir: String,
 }
 
 impl SettingsScreen {
     pub fn new(theme: Theme) -> Self {
         Self {
             allocated_ram: 4096,
-            java_path: String::from("/usr/bin/java"),
-            selected_language: String::from("English"),
+            java_path: "/usr/bin/java".to_owned(),
+            minecraft_root_dir: "../.minecraft".to_owned(),
+            selected_language: "English".to_owned(),
             current_theme: theme,
         }
     }
@@ -44,6 +49,30 @@ impl SettingsScreen {
             Message::JavaPathChanged(path) => self.java_path = path,
             Message::LanguageChanged(lang) => self.selected_language = lang,
             Message::ThemeChanged(theme) => self.current_theme = theme,
+            Message::MinecraftRootDirChanged(minecraft_root_dir) => {
+                self.minecraft_root_dir = minecraft_root_dir
+            }
+            Message::BrowseMinecraftDir => {
+                let message = Task::perform(
+                    async {
+                        let path = rfd::AsyncFileDialog::new()
+                            .set_title("Select Minecraft Root Directory")
+                            .pick_folder()
+                            .await;
+
+                        path
+                    },
+                    |folder_handle| {
+                        if let Some(handle) = folder_handle {
+                            Message::MinecraftRootDirChanged(handle.path().display().to_string())
+                        } else {
+                            Message::None
+                        }
+                    },
+                );
+
+                return message;
+            }
             _ => {}
         }
 
@@ -52,6 +81,7 @@ impl SettingsScreen {
             java_path: self.java_path.clone(),
             language: self.selected_language.clone(),
             theme: format!("{:?}", self.current_theme),
+            minecraft_root_dir: self.minecraft_root_dir.clone(),
         };
 
         let _ = ConfigRepository::save(config);
@@ -206,6 +236,26 @@ impl SettingsScreen {
                 button(text("Browse").size(14))
                     .padding([12, 20])
                     .style(button::primary),
+            ],
+            Space::new().height(25),
+            // Minecraft directory
+            text("Minecraft Root Directory").size(16).font(Font {
+                weight: iced::font::Weight::Semibold,
+                ..Default::default()
+            }),
+            Space::new().height(10),
+            row![
+                text_input(
+                    "Select Minecraft Root Directory...",
+                    &self.minecraft_root_dir
+                )
+                .on_input(Message::MinecraftRootDirChanged)
+                .padding(12),
+                Space::new().width(10),
+                button(text("Browse").size(14))
+                    .padding([12, 20])
+                    .style(button::primary)
+                    .on_press(Message::BrowseMinecraftDir),
             ]
         ]
         .into()

@@ -27,34 +27,35 @@ fn update(state: &mut State, message: Message) -> Task<Message> {
     #[allow(unreachable_patterns)]
     match message {
         Message::Home(message) => state.saved_screen.home.update(message).map(Message::Home),
-        Message::Settings(message) => match message {
-            ui::settings::Message::ThemeChanged(new_theme) => {
-                // Update state for iced
-                state.theme = new_theme.clone();
+        Message::Settings(message) => {
+            match &message {
+                ui::settings::Message::ThemeChanged(new_theme) => {
+                    // Update state for iced
+                    state.theme = new_theme.clone();
 
-                // Update Global Pallete for AppUI
-                {
-                    let mut palette = crate::theme::CURRENT_PALETTE.write().unwrap();
-                    *palette = match new_theme {
-                        iced::Theme::TokyoNightLight => {
-                            crate::theme::ThemePalette::tokyo_night_light()
-                        }
-                        _ => crate::theme::ThemePalette::tokyo_night(),
-                    };
+                    // Update Global Pallete for AppUI
+                    {
+                        let mut palette = crate::theme::CURRENT_PALETTE.write().unwrap();
+                        *palette = match new_theme {
+                            iced::Theme::TokyoNightLight => {
+                                crate::theme::ThemePalette::tokyo_night_light()
+                            }
+                            _ => crate::theme::ThemePalette::tokyo_night(),
+                        };
+                    }
                 }
+                ui::settings::Message::MinecraftRootDirChanged(dir) => {
+                    println!("directory: {}", dir);
+                }
+                _ => {}
+            };
 
-                state
-                    .saved_screen
-                    .settings
-                    .update(ui::settings::Message::ThemeChanged(new_theme))
-                    .map(Message::Settings)
-            }
-            _ => state
+            state
                 .saved_screen
                 .settings
                 .update(message)
-                .map(Message::Settings),
-        },
+                .map(Message::Settings)
+        }
         Message::Accounts(message) => {
             state.saved_screen.accounts.update(message);
             Task::none()
