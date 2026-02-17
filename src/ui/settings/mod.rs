@@ -21,6 +21,7 @@ pub enum Message {
     BrowseMinecraftDir,
     CheckForUpdates,
     OpenGithub,
+    None,
 }
 
 pub struct SettingsScreen {
@@ -52,13 +53,25 @@ impl SettingsScreen {
                 self.minecraft_root_dir = minecraft_root_dir
             }
             Message::BrowseMinecraftDir => {
-                let path = rfd::FileDialog::new()
-                    .set_title("Select Minecraft Root Directory")
-                    .pick_folder();
+                let message = Task::perform(
+                    async {
+                        let path = rfd::AsyncFileDialog::new()
+                            .set_title("Select Minecraft Root Directory")
+                            .pick_folder()
+                            .await;
 
-                if let Some(path) = path {
-                    self.minecraft_root_dir = path.display().to_string();
-                }
+                        path
+                    },
+                    |folder_handle| {
+                        if let Some(handle) = folder_handle {
+                            Message::MinecraftRootDirChanged(handle.path().display().to_string())
+                        } else {
+                            Message::None
+                        }
+                    },
+                );
+
+                return message;
             }
             _ => {}
         }
@@ -68,6 +81,7 @@ impl SettingsScreen {
             java_path: self.java_path.clone(),
             language: self.selected_language.clone(),
             theme: format!("{:?}", self.current_theme),
+            minecraft_root_dir: self.minecraft_root_dir.clone(),
         };
 
         let _ = ConfigRepository::save(config);

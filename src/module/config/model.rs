@@ -9,6 +9,7 @@ pub struct AppConfig {
     pub java_path: String,
     pub language: String,
     pub theme: String,
+    pub minecraft_root_dir: String,
 }
 
 impl Default for AppConfig {
@@ -16,6 +17,7 @@ impl Default for AppConfig {
         Self {
             allocated_ram: 4096,
             java_path: String::from("/usr/bin/java"),
+            minecraft_root_dir: String::from("~/.minecraft"),
             language: String::from("English"),
             theme: String::from("TokyoNight"),
         }

@@ -8,6 +8,8 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
+use crate::module::config::model::AppConfig;
+use crate::module::config::repository::ConfigRepository;
 use crate::module::launcher::model::VersionDetail;
 use crate::module::launcher::repository::LauncherRepository;
 use crate::module::mojang::entity::MinecraftVersion;
@@ -73,8 +75,11 @@ pub struct LauncherService {}
 
 impl LauncherService {
     fn get_minecraft_root_dir() -> Result<PathBuf, Error> {
-        let current_dir = std::env::current_dir()?;
-        return Ok(current_dir.join("../.minecraft"));
+        let config = ConfigRepository::load();
+
+        let minecraft_root_dir = config.minecraft_root_dir;
+
+        return Ok(minecraft_root_dir.into());
     }
 
     /// Lauch minecraft
