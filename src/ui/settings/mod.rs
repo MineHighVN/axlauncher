@@ -18,6 +18,7 @@ pub enum Message {
     MinecraftRootDirChanged(String),
     LanguageChanged(String),
     ThemeChanged(Theme),
+    BrowseMinecraftDir,
     CheckForUpdates,
     OpenGithub,
 }
@@ -49,6 +50,15 @@ impl SettingsScreen {
             Message::ThemeChanged(theme) => self.current_theme = theme,
             Message::MinecraftRootDirChanged(minecraft_root_dir) => {
                 self.minecraft_root_dir = minecraft_root_dir
+            }
+            Message::BrowseMinecraftDir => {
+                let path = rfd::FileDialog::new()
+                    .set_title("Select Minecraft Root Directory")
+                    .pick_folder();
+
+                if let Some(path) = path {
+                    self.minecraft_root_dir = path.display().to_string();
+                }
             }
             _ => {}
         }
@@ -230,7 +240,8 @@ impl SettingsScreen {
                 Space::new().width(10),
                 button(text("Browse").size(14))
                     .padding([12, 20])
-                    .style(button::primary),
+                    .style(button::primary)
+                    .on_press(Message::BrowseMinecraftDir),
             ]
         ]
         .into()
