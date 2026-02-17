@@ -1,6 +1,7 @@
 // Copyright 2026 MineHighVN, AXLauncher contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use std::io::Error;
 use std::path::PathBuf;
 
 use std::fs;
@@ -26,9 +27,8 @@ impl LauncherPaths {
     /// Initialize paths for version, jar, libraries and assets
     /// TODO: Add path for release (%APPDATA%/.minecraft, ~/.minecraft) later
     /// TODO: Path is editable, not fixed
-    fn new(version_id: &str) -> Result<Self, String> {
-        let current_dir = std::env::current_dir().map_err(|e| e.to_string())?;
-        let root_dir = current_dir.join("../minecraft_data");
+    fn new(version_id: &str, minecraft_root_dir: PathBuf) -> Result<Self, String> {
+        let root_dir = minecraft_root_dir;
         let version_dir = root_dir.join("versions").join(version_id);
 
         Ok(Self {
@@ -59,6 +59,7 @@ pub struct LaunchArgs {
 }
 
 impl Default for LaunchArgs {
+    // TODO: implement uuid and access token
     fn default() -> Self {
         Self {
             username: "".to_owned(),
@@ -71,10 +72,17 @@ impl Default for LaunchArgs {
 pub struct LauncherService {}
 
 impl LauncherService {
+    fn get_minecraft_root_dir() -> Result<PathBuf, Error> {
+        let current_dir = std::env::current_dir()?;
+        return Ok(current_dir.join("../.minecraft"));
+    }
+
     /// Lauch minecraft
     pub async fn launch(launch_args: LaunchArgs, version: MinecraftVersion) -> Result<(), String> {
+        let minecraft_root_dir = Self::get_minecraft_root_dir().map_err(|e| e.to_string())?;
+
         // Create path
-        let paths = LauncherPaths::new(&version.id)?;
+        let paths = LauncherPaths::new(&version.id, minecraft_root_dir)?;
         paths.ensure_directories()?;
 
         // Install Metadata
