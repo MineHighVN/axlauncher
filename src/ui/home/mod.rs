@@ -112,7 +112,14 @@ impl HomeScreen {
                                 },
                                 version.clone(),
                             ),
-                            |_| Message::LaunchFinished,
+                            |e| {
+                                if e.is_err() {
+                                    println!("Error: {:?}", e);
+                                    Message::LaunchFinished
+                                } else {
+                                    Message::LaunchFinished
+                                }
+                            },
                         );
                     }
                 }

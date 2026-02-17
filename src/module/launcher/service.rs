@@ -112,16 +112,50 @@ impl LauncherService {
         version: &MinecraftVersion,
         paths: &LauncherPaths,
     ) -> Result<VersionDetail, String> {
-        let Some(version_url) = &version.url else {
-            return Err("Unknown error".to_owned());
-        };
+        if !version.available {
+            let Some(version_url) = &version.url else {
+                return Err("Unknown error".to_owned());
+            };
 
-        if !paths.version_json.exists() {
-            LauncherRepository::download_file(&version_url, &paths.version_json).await?;
+            if !paths.version_json.exists() {
+                LauncherRepository::download_file(&version_url, &paths.version_json).await?;
+            }
         }
 
         let content = fs::read_to_string(&paths.version_json).map_err(|e| e.to_string())?;
-        serde_json::from_str(&content).map_err(|e| format!("Json error: {}", e))
+        let mut detail: VersionDetail =
+            serde_json::from_str(&content).map_err(|e| e.to_string())?;
+
+        // Handle version inherits
+        if let Some(parent_id) = &detail.inherits_from {
+            let root_dir = paths.root_dir.clone();
+            let parent_json_path = root_dir
+                .join("versions")
+                .join(parent_id)
+                .join(format!("{}.json", parent_id));
+
+            if parent_json_path.exists() {
+                let parent_content =
+                    fs::read_to_string(parent_json_path).map_err(|e| e.to_string())?;
+                let parent_detail: VersionDetail =
+                    serde_json::from_str(&parent_content).map_err(|e| e.to_string())?;
+
+                // Combind libraries
+                let mut all_libraries = detail.libraries;
+                all_libraries.extend(parent_detail.libraries);
+                detail.libraries = all_libraries;
+
+                if detail.downloads.is_none() {
+                    detail.downloads = parent_detail.downloads;
+                }
+
+                if detail.assetIndex.is_none() {
+                    detail.assetIndex = parent_detail.assetIndex;
+                }
+            }
+        }
+
+        Ok(detail)
     }
 
     /// Prepare all dependencies
@@ -131,9 +165,10 @@ impl LauncherService {
         paths: &LauncherPaths,
     ) -> Result<(), String> {
         // Install client jar
-        if !paths.client_jar.exists() {
-            LauncherRepository::download_file(&detail.downloads.client.url, &paths.client_jar)
-                .await?;
+        if paths.client_jar.try_exists().map_err(|e| e.to_string())? == false {
+            if let Some(downloads) = &detail.downloads {
+                LauncherRepository::download_file(&downloads.client.url, &paths.client_jar).await?;
+            }
         }
 
         // Install libraries
@@ -155,6 +190,23 @@ impl LauncherService {
         Ok(())
     }
 
+    // Convert java library name to path
+    fn name_to_path(name: &String) -> String {
+        let parts: Vec<&str> = name.split(':').collect();
+        if parts.len() < 3 {
+            return name.clone();
+        }
+
+        let group = parts[0].replace('.', "/");
+        let artifact = parts[1];
+        let version = parts[2];
+
+        format!(
+            "{}/{}/{}/{}-{}.jar",
+            group, artifact, version, artifact, version
+        )
+    }
+
     /// Build classpath
     fn build_classpath(detail: &VersionDetail, paths: &LauncherPaths) -> String {
         let mut entries = vec![paths.client_jar.to_str().unwrap().to_string()];
@@ -163,9 +215,18 @@ impl LauncherService {
             if !LauncherRepository::should_download_lib(lib) {
                 continue;
             }
-            if let Some(artifact) = lib.downloads.as_ref().and_then(|d| d.artifact.as_ref()) {
-                let lib_path = paths.libraries_dir.join(&artifact.path);
-                entries.push(lib_path.to_str().unwrap().to_string());
+            let relative_path =
+                if let Some(artifact) = lib.downloads.as_ref().and_then(|d| d.artifact.as_ref()) {
+                    Some(artifact.path.clone())
+                } else {
+                    Some(Self::name_to_path(&lib.name))
+                };
+
+            if let Some(path) = relative_path {
+                let lib_path = paths.libraries_dir.join(path);
+                if let Some(p_str) = lib_path.to_str() {
+                    entries.push(p_str.to_string());
+                }
             }
         }
 
@@ -192,6 +253,12 @@ impl LauncherService {
         #[cfg(target_os = "macos")]
         cmd.arg("-XstartOnFirstThread");
 
+        let asset_index_id = detail
+            .assetIndex
+            .as_ref()
+            .map(|a| a.id.as_str())
+            .unwrap_or("legacy");
+
         cmd.args([
             "-Xmx2G",
             "-cp",
@@ -204,7 +271,7 @@ impl LauncherService {
             "--assetsDir",
             paths.assets_dir.to_str().unwrap(),
             "--assetIndex",
-            &detail.assetIndex.id,
+            &asset_index_id,
             "--username",
             &args.username,
             "--uuid",
@@ -228,10 +295,11 @@ impl LauncherService {
         if java_path.exists() {
             Ok(java_path)
         } else {
-            let download_java_path =
-                LauncherRepository::download_and_extract_java(&find_dir.into())
-                    .await
-                    .unwrap();
+            let download_java_path = LauncherRepository::download_and_extract_java(
+                &find_dir.join("java_runtime").into(),
+            )
+            .await
+            .unwrap();
             Ok(download_java_path)
         }
     }

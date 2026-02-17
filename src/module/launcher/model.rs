@@ -7,9 +7,11 @@ use serde::Deserialize;
 #[allow(non_snake_case)]
 pub struct VersionDetail {
     pub mainClass: String,
-    pub downloads: Downloads,
-    pub assetIndex: AssetIndex,
+    pub downloads: Option<Downloads>,
+    pub assetIndex: Option<AssetIndex>,
     pub libraries: Vec<Library>,
+    #[serde(rename = "inheritsFrom")]
+    pub inherits_from: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -34,6 +36,7 @@ pub struct AssetIndex {
 #[allow(dead_code)]
 #[derive(Deserialize, Debug)]
 pub struct Library {
+    pub url: Option<String>,
     pub downloads: Option<LibDownloads>,
     pub name: String,
     pub rules: Option<Vec<Rule>>,
