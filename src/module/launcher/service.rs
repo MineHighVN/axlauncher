@@ -8,7 +8,6 @@ use std::fs;
 use std::path::Path;
 use std::process::Command;
 
-use crate::module::config::model::AppConfig;
 use crate::module::config::repository::ConfigRepository;
 use crate::module::launcher::model::VersionDetail;
 use crate::module::launcher::repository::LauncherRepository;
@@ -113,8 +112,12 @@ impl LauncherService {
         version: &MinecraftVersion,
         paths: &LauncherPaths,
     ) -> Result<VersionDetail, String> {
+        let Some(version_url) = &version.url else {
+            return Err("Unknown error".to_owned());
+        };
+
         if !paths.version_json.exists() {
-            LauncherRepository::download_file(&version.url, &paths.version_json).await?;
+            LauncherRepository::download_file(&version_url, &paths.version_json).await?;
         }
 
         let content = fs::read_to_string(&paths.version_json).map_err(|e| e.to_string())?;
@@ -231,5 +234,15 @@ impl LauncherService {
                     .unwrap();
             Ok(download_java_path)
         }
+    }
+
+    fn get_local_minecraft_versions() -> Vec<MinecraftVersion> {
+        let minecraft_root_dir = Self::get_minecraft_root_dir();
+
+        vec![MinecraftVersion {
+            id: "1.21.11".to_owned(),
+            version_type: "release".to_owned(),
+            url: None,
+        }]
     }
 }

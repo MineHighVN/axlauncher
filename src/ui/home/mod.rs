@@ -98,7 +98,7 @@ impl HomeScreen {
         let main_msg = if let Some(err) = &self.error {
             format!("Error: {}", err)
         } else {
-            "Welcome to the Minecraft Launcher!".to_string()
+            "Welcome to the AxLauncher!".to_string()
         };
 
         let content = column![

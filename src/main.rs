@@ -118,6 +118,7 @@ fn new() -> (State, Task<Message>) {
 
 fn main() -> iced::Result {
     iced::application(new, update, view)
+        .title("AxLauncher")
         .theme(theme::theme)
         .run()
 }

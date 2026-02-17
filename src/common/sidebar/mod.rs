@@ -87,13 +87,13 @@ fn nav_item<'a>(
 }
 
 pub fn app_sidebar<'a>(current_page: Page) -> Element<'a, Message> {
-    let header = column![
-        text("MINECRAFT").size(24).font(Font {
+    let header = row![
+        text("AX").size(24).font(Font {
             weight: iced::font::Weight::Bold,
             ..Default::default()
         }),
         text("LAUNCHER")
-            .size(12)
+            .size(16)
             .font(Font {
                 weight: iced::font::Weight::Normal,
                 ..Default::default()
@@ -102,7 +102,8 @@ pub fn app_sidebar<'a>(current_page: Page) -> Element<'a, Message> {
                 color: Some(theme.extended_palette().secondary.base.color)
             }),
     ]
-    .spacing(4)
+    .spacing(8)
+    .align_y(Alignment::End)
     .padding(Padding {
         top: 20.0,
         right: 10.0,

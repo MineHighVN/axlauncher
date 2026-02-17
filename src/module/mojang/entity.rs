@@ -7,7 +7,7 @@ use core::fmt;
 pub struct MinecraftVersion {
     pub id: String,
     pub version_type: String,
-    pub url: String,
+    pub url: Option<String>,
 }
 
 impl fmt::Display for MinecraftVersion {

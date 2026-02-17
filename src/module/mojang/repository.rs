@@ -26,7 +26,7 @@ impl MojangRepository {
             .map(|v| MinecraftVersion {
                 id: v.id,
                 version_type: v.r#type,
-                url: v.url,
+                url: Some(v.url),
             })
             .collect())
     }
