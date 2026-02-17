@@ -236,13 +236,20 @@ impl LauncherService {
         }
     }
 
-    fn get_local_minecraft_versions() -> Vec<MinecraftVersion> {
-        let minecraft_root_dir = Self::get_minecraft_root_dir();
+    pub fn get_local_minecraft_versions() -> Result<Vec<MinecraftVersion>, Error> {
+        let minecraft_root_dir = Self::get_minecraft_root_dir()?.join("versions");
 
-        vec![MinecraftVersion {
-            id: "1.21.11".to_owned(),
-            version_type: "release".to_owned(),
-            url: None,
-        }]
+        let list_dir = fs::read_dir(minecraft_root_dir)?;
+
+        let minecraft_versions: Vec<MinecraftVersion> = list_dir
+            .map(|v| MinecraftVersion {
+                id: v.unwrap().file_name().into_string().unwrap(),
+                version_type: "modded".to_owned(),
+                url: None,
+                available: true,
+            })
+            .collect();
+
+        Ok(minecraft_versions)
     }
 }

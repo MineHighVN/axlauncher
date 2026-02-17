@@ -27,6 +27,7 @@ impl MojangRepository {
                 id: v.id,
                 version_type: v.r#type,
                 url: Some(v.url),
+                available: false,
             })
             .collect())
     }

@@ -320,7 +320,7 @@ impl SettingsScreen {
     /// Footer content
     fn view_footer_section(&self) -> Element<'_, Message> {
         column![
-            text("Minecraft Launcher v1.0.0")
+            text("AxLauncher v1.0.0")
                 .size(12)
                 .style(|theme: &Theme| text::Style {
                     color: Some(theme.extended_palette().secondary.weak.text)
